@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "deny": [
+      "mcp__claude_ai_Gmail__send*",
+      "mcp__gmail__send*"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_send.py\""
+          }
+        ]
+      }
+    ]
+  }
+}
