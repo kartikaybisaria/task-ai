@@ -311,3 +311,13 @@ def test_BEH_01_6_unresolvable_deadline_gives_null_raw_and_warning(tmp_path):
 def test_BEH_01_6_em_dash_before_deadline_removed():
     s = [x for x in _ok(N / "2026-09-08-quote-portal-weekly.md").sightings if "quote to Acme" in x.task_text]
     assert len(s) == 1 and s[0].task_text == "send revised quote to Acme"
+
+
+def test_overflowing_date_does_not_crash_ingest(tmp_path):
+    from actiontrack.ingest import ingest
+    d = tmp_path / "n"
+    d.mkdir()
+    (d / "9999-12-31-big.md").write_text("- [ ] Karan to do x by tomorrow\n", encoding="utf-8")
+    (d / "2026-09-01-ok.md").write_text("- [ ] Karan to do y by Friday\n", encoding="utf-8")
+    r = ingest(d, tmp_path / "t.db")
+    assert r["scanned"] == 2

@@ -131,7 +131,7 @@ def test_AC_02_11_welcome_copy(shipped_db):
 
 
 def test_AC_02_12_replanned_due_date(shipped_db):
-    it = find_item(shipped_db, "Lena Fischer", "customer quotes")
+    it = find_item(shipped_db, "Lena Fischer", "collect 5 customer quotes")
     assert (it["due_date"], it["status"]) == ("2026-10-02", "open")
 
 

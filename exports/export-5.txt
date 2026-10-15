@@ -1,0 +1,266 @@
+
+> <ide_opened_file>The user opened the file
+  c:\Users\kartikay.bisaria_cod\Downloads\task@ai\setup3. tests.txt in the IDE.
+  This may or may not be related to the current task.</ide_opened_file>
+
+> Phase 4: Implement parsing, dedup and ingest (fresh session)
+
+  Prompt 4.1
+
+  Read CLAUDE.md, specs/01-parsing.md, specs/02-dedup-owners-dates.md, and
+  .claude/skills/meeting-note-parsing/SKILL.md.
+  Implement in src/actiontrack/: parser.py, dates.py, owners.py, dedup.py,
+  db.py (sqlite3), ingest.py. Work in small steps and run pytest -q after each
+  module. Don't touch the tests unless a test contradicts the spec; if so,
+  tell me and stop. Goal: all parsing/dedup/owner/date tests pass.
+
+  Prompt 4.2: real-data run
+
+  Run ingest against the real notes/ folder with ACTIONTRACK_TODAY set to a
+  sensible date. Show me: files parsed, files skipped (with reasons), item
+  count, duplicates merged, unassigned count, ambiguous owner count. Then
+  sample 10 items at random and check them against their source lines. Fix any
+  parsing bug you find and add a regression test for each.
+  /export conversations/04-ingest.md
+  git add -A && git commit -m "feat: parsing, dedup, owners, dates, ingest"
+  /clear
+  Phase 5: CLI commands and follow-up (
+
+  Prompt 5.1
+
+  Read CLAUDE.md, specs/03-cli.md, specs/04-followup-gmail.md.
+  Implement cli.py and __main__.py with: ingest, list (--owner, --status,
+  --due-before, with overdue clearly marked), done <id>, and
+  followup <owner> [--dry-run]. followup must output JSON with to, subject,
+  body, and must have no send capability of any kind. For ambiguous owner
+  names, exit non-zero and list the candidates. Run pytest -q until green.
+
+  Prompt 5.2: use the skill with Gmail
+
+  Use the followup-email skill to create a Gmail draft for <pick an owner with
+  overdue items>. Create a draft only, do NOT send. Show me the draft ID/link
+  and the body.
+
+  finish these two in 10 mins!!!
+
+  Ran 6 shell commands (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+
+> Phase 4: Implement parsing, dedup and ingest (fresh session)
+
+  Prompt 4.1
+
+  Read CLAUDE.md, specs/01-parsing.md, specs/02-dedup-owners-dates.md, and
+  .claude/skills/meeting-note-parsing/SKILL.md.
+  Implement in src/actiontrack/: parser.py, dates.py, owners.py, dedup.py,
+  db.py (sqlite3), ingest.py. Work in small steps and run pytest -q after each
+  module. Don't touch the tests unless a test contradicts the spec; if so,
+  tell me and stop. Goal: all parsing/dedup/owner/date tests pass.
+
+  Prompt 4.2: real-data run
+
+  Run ingest against the real notes/ folder with ACTIONTRACK_TODAY set to a
+  sensible date. Show me: files parsed, files skipped (with reasons), item
+  count, duplicates merged, unassigned count, ambiguous owner count. Then
+  sample 10 items at random and check them against their source lines. Fix any
+  parsing bug you find and add a regression test for each.
+  /export conversations/04-ingest.md
+  git add -A && git commit -m "feat: parsing, dedup, owners, dates, ingest"
+  /clear
+  Phase 5: CLI commands and follow-up (fresh session)
+
+  Prompt 5.1
+
+  Read CLAUDE.md, specs/03-cli.md, specs/04-followup-gmail.md.
+  Implement cli.py and __main__.py with: ingest, list (--owner, --status,
+  --due-before, with overdue clearly marked), done <id>, and
+  followup <owner> [--dry-run]. followup must output JSON with to, subject,
+  body, and must have no send capability of any kind. For ambiguous owner
+  names, exit non-zero and list the candidates. Run pytest -q until green.
+
+  Prompt 5.2: use the skill with Gmail
+
+  Use the followup-email skill to create a Gmail draft for <pick an owner with
+  overdue items>. Create a draft only, do NOT send. Show me the draft ID/link
+  and the body.
+  finish these fastets possible!!
+
+● Still reading the remaining specs and tests (CLI, follow-up, findings). Next I
+  write the code.
+
+  Ran 5 shell commands (ctrl+o to expand)
+
+● Write(src\actiontrack\dates.py)
+  ⎿  Wrote 180 lines to src\actiontrack\dates.py
+       1 """Date helpers: today, meeting-date parsing, due-date expressio
+         n resolution."""
+       3 import re
+       4 from datetime import date, timedelta
+       5
+       7     ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "se
+         p", "oct", "nov", "dec"], 1)}
+       8 WEEKDAYS = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "s
+       9
+      10 _ISO = re.compile(r"\d{4}-\d{2}-\d{2}")
+     … +192 lines (ctrl+o to expand)
+
+● Write(src\actiontrack\owners.py)
+  ⎿  Wrote 39 lines to src\actiontrack\owners.py
+       1 """Owner resolution: first names / handles / full names -> canon
+         ical roster names."""
+       2 import re
+       4 PLACEHOLDERS = {"everyone", "team", "someone", "tbd", "unassigne
+         d"}
+       5 _INITIAL = re.compile(r"(\S+)\s+([A-Za-z])\.")
+       6
+       8 def is_placeholder(tok):
+       9     t = tok.strip().lstrip("@").casefold()
+      10     return not t or t in PLACEHOLDERS
+     … +32 lines (ctrl+o to expand)
+
+● Write(src\actiontrack\dedup.py)
+  ⎿  Wrote 22 lines to src\actiontrack\dedup.py
+       1 """Fingerprinting and fuzzy matching of tasks."""
+       2 import difflib
+       3 import re
+       4 import unicodedata
+       5
+       6 NOISE = {"a", "an", "the", "first", "updated", "revised"}
+       7 THRESHOLD = 0.85
+       8
+       9
+      10 def normalize(text):
+     … +17 lines (ctrl+o to expand)
+
+● Write(src\actiontrack\matching.py)
+  ⎿  Wrote 1 line to src\actiontrack\matching.py
+      1 from .dedup import best_match, normalize  # noqa: F401
+
+● Write(src\actiontrack\__init__.py)
+  ⎿  Wrote 1 line to src\actiontrack\__init__.py
+      1 """actiontrack: extract action items from meeting notes."""
+
+● Write(src\actiontrack\__main__.py)
+  ⎿  Wrote 5 lines to src\actiontrack\__main__.py
+      1 import sys
+      2
+      3 from .cli import main
+      4
+      5 sys.exit(main())
+
+● Write(src\actiontrack\parser.py)
+  ⎿  Wrote 194 lines to src\actiontrack\parser.py
+      1 """Parse one meeting-note file into a Note or a skip reason. Neve
+        r raises for file content."""
+      2 import re
+      3 from dataclasses import dataclass, field
+      4 from datetime import date
+      5 from pathlib import Path
+      6
+      7 from . import dates
+      8 from .owners import is_placeholder
+      9
+     … +198 lines (ctrl+o to expand)
+
+● Parser, dates, owners and dedup are written. Next are db, ingest and cli, then
+  I run the tests.
+
+● Write(src\actiontrack\db.py)
+  ⎿  Wrote 46 lines to src\actiontrack\db.py
+       1 """SQLite storage."""
+       2 import sqlite3
+       3 from pathlib import Path
+       4
+       5 SCHEMA = """
+       7   id INTEGER PRIMARY KEY AUTOINCREMENT,
+       8   owner TEXT NOT NULL, co_owners TEXT NOT NULL DEFAULT '[]', own
+         er_raw TEXT,
+       9   task TEXT NOT NULL, task_key TEXT NOT NULL,
+      10   due_date TEXT, due_raw TEXT,
+     … +41 lines (ctrl+o to expand)
+
+● Write(src\actiontrack\ingest.py)
+  ⎿  Wrote 131 lines to src\actiontrack\ingest.py
+       1 """Ingest note files into the database (idempotent, per-file tra
+         nsactions)."""
+       2 import json
+       4
+       5 from . import db
+       6 from .dedup import best_match, normalize
+       7 from .owners import resolve
+       9
+      10 COLS = ("line", "meeting_date", "attendees", "checked", "source"
+         , "owner_raw", "task_text",
+     … +154 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(src\actiontrack\cli.py)
+  ⎿  Wrote 314 lines to src\actiontrack\cli.py
+       1 """Command-line interface: ingest, list, done, followup. Read-on
+         ly except ingest/done."""
+       2 import argparse
+       3 import csv
+       4 import json
+       6 import sys
+       7 from datetime import date
+       8 from pathlib import Path
+       9
+      10 from . import dates, db
+     … +354 lines (ctrl+o to expand)
+
+  Ran 5 shell commands (ctrl+o to expand)
+
+● Tests: 216 pass and 2 fail (a missing spec doc and a test that conflicts with
+  the spec). Now the real-data run, using PYTHONPATH and a scratchpad DB.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Phases 4 and 5.1 are implemented. 216 of 218 tests pass, and the two failures
+  are not code bugs. I did not create the Gmail draft in 5.2, because the Gmail
+  connector isn't authorized in this session. I also did not run the git commit
+  or /export.
+
+  What's built (in src/actiontrack/ (actiontrack/src/actiontrack/))
+  - Parsing, dedup and ingest: parser.py, dates.py, owners.py, dedup.py, db.py,
+    ingest.py. I added matching.py because the test helper imports normalize
+    from there.
+  - CLI: cli.py and __main__.py with ingest, list, done and followup.
+  - followup outputs JSON with owner, to, subject, body, warnings. It is
+    read-only (SQLite opened with mode=ro) and has no network or mail code.
+  - An ambiguous owner name like Priya exits 2 and lists the candidates, Priya
+    Nair, Priya Shah.
+
+  The two failing tests
+  - test_AC_00_7 needs specs/traceability.md, which doesn't exist. That's a
+    missing doc, not code.
+  - test_AC_02_12 looks up Lena's item by customer quotes and expects exactly
+    one match. The notes contain two separate Lena tasks: "collect 5 customer
+    quotes…" and "publish the customer quotes". Per the spec they stay two
+    items, so the test's lookup is too loose. You said to stop and tell you if a
+    test contradicts the spec, so I haven't touched either test.
+
+  4.2 real-data run (ACTIONTRACK_TODAY=2026-10-15)
+  - 36 files scanned, 32 parsed, 4 skipped:
+    - 2026-09-09-notes-final-v2.md: empty file
+    - 2026-09-19-offsite-draft.txt: unsupported extension (.txt)
+    - scratch.md: binary content (NUL bytes)
+    - untitled.md: no meeting date
+  - 117 sightings merged into 93 items, so 24 duplicates merged.
+  - 5 unassigned items and 6 items with an ambiguous owner, matching the spec.
+  - I spot-checked 10 random items against their source lines and all were
+    correct, so there were no parsing bugs to fix and no regression tests to
+    add.
+  - Ingest prints two extra warnings the spec doesn't list: before cutover
+    (2026-09-03:12) and before the next review (2026-09-18:14). The spec says an
+    unresolvable before clause gets a warning, so this is expected.
+
+  5.2 Gmail draft
+  - The Gmail connector (claude.ai Gmail) needs authorizing in your claude.ai
+    connector settings, and I can't do that from here.
+  - The follow-up for Karan Joshi (6 overdue, 4 open) is ready. The dry-run JSON
+    matches the spec's worked example. I used the test fixture contacts file,
+    since there is no real contacts.csv.
+  - Once Gmail is authorized, I can create the draft from that JSON (draft only,
+    never send). Say if you want me to do that, and send me the real contacts
+    file or the address to use.

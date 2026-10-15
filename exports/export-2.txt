@@ -1,0 +1,287 @@
+
+> <ide_opened_file>The user opened the file
+  c:\Users\kartikay.bisaria_cod\Downloads\task@ai\setup1.txt in the IDE. This
+  may or may not be related to the current task.</ide_opened_file>
+
+> session 2
+  Based on specs/findings.md, list the ambiguities you see. Then propose a
+  decision for each, using these defaults unless the notes contradict them:
+  - Overdue = status open AND due_date < today (computed, not stored)
+  - "by Friday" = first Friday after the meeting date; tomorrow / next week /
+    end of month / EOW resolve relative to the meeting date
+  - No owner -> "Unassigned"; no date -> NULL, keep the raw text in due_raw
+  - Duplicates: normalized owner + normalized task, plus difflib ratio >= 0.85;
+    keep the earliest, record every sighting, a later [x] marks it done
+  - Same first name: resolve via the attendee list to a full name; otherwise
+    "Priya (ambiguous)" flagged; --owner accepts a full name or errors with
+  candidates
+  - Malformed note: skip, report file and reason, exit 0
+  - Ingest is idempotent
+  - "Today" is injectable via env ACTIONTRACK_TODAY
+    Ask me at most 5 questions about anything you can't decide. Don't write
+  files yet.
+
+  Searched for 2 patterns, ran 2 shell commands (ctrl+o to expand)
+
+● I can't do this yet because specs/findings.md doesn't exist. The
+  actiontrack/specs/ folder is empty, and a search of the whole task@ai tree
+  found no file called findings. The conversations/, .claude/skills/ and
+  .claude/commands/ folders are empty too.
+
+  The only Phase 1 material here is the 36 raw files in actiontrack/notes/ and
+  the Step 0 log in setup1.txt. So the findings pass, where Claude reads the
+  notes and writes up what it found, hasn't happened or wasn't saved. This
+  session is also running from task@ai, not actiontrack. If you wrote
+  findings.md in a separate session opened in actiontrack, it may have been
+  lost.
+
+  I haven't listed ambiguities, because I'd be guessing at what the findings
+  said. Your defaults would still apply either way.
+
+  Two ways forward:
+  1. Derive the ambiguities from the raw notes. I read all 36 files in
+     actiontrack/notes/, including odd ones like scratch.md, untitled.md,
+     2026-09-09-notes-final-v2.md and the .txt offsite draft. Then I give you
+     the ambiguity list, a proposed decision for each using your defaults, and
+     at most 5 questions. Nothing gets written. This is my recommendation, since
+     the notes are what findings.md would have summarised.
+  2. Re-run Phase 1 first. That means producing specs/findings.md from the notes
+     in a session opened in actiontrack, then doing this step against it. It
+     matches your phased flow better, but it takes a full extra pass.
+
+  Tell me which one you want, or point me to the file if it's somewhere else.
+
+> You are helping me build a CLI called actiontrack. Do NOT write code yet.
+  Task: it reads markdown meeting notes in notes/, tracks action items
+  ("- [ ] Priya to send the revised quote by Friday"), and drafts follow-up
+  emails.
+
+  First, explore notes/ efficiently:
+  1. Count the files and list the 5 longest and 5 smallest by size.
+  2. Use grep/head, not full reads, to find: date formats used (front matter,
+     headers, inline), how attendees are listed, how checkbox lines are written
+     (variants of - [ ], - [x], *, nested, indented), how owners are phrased,
+     how due dates are phrased.
+  3. Identify files that look malformed (no date, no attendees, empty, binary,
+     bad encoding, CRLF) and say why.
+  4. Find examples of: the same task repeated across meetings, items without
+     an owner, items without a due date, two people with the same first name.
+     Write your findings to specs/findings.md with concrete examples (file name
+  +
+     line). Keep it under 150 lines.
+     run again!!
+
+  Ran 8 shell commands (ctrl+o to expand)
+
+● Exploration is done; I'm checking a couple of counts, then writing
+  specs/findings.md.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(specs\findings.md)
+  ⎿  Wrote 127 lines to specs\findings.md
+       1 # actiontrack: findings from notes/
+       3 36 files, ~16.7 KB total. 119 checkbox lines (13 checked) outsid
+         e scratch.md.
+       4 Line numbers are 1-based. File names are in `notes/`.
+       6 ## 1. Size
+       7 Largest: 2026-09-30-q4-offsite.md (1685 B), 2026-10-09-security-
+       8 2026-09-18-design-review.md (942), 2026-09-21-incident-review.md
+          (767),
+       9 2026-09-01-quote-portal-kickoff.md (575).
+         raft.txt (71),
+     … +200 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● I wrote the findings to specs/findings.md (actiontrack/specs/findings.md), 127
+  lines. It cites file and line for every example. I used grep, file and a few
+  targeted reads rather than reading everything.
+
+  - Files: 36 files, about 16.7 KB, with 119 checkbox lines, 13 of them checked.
+    The largest is 2026-09-30-q4-offsite.md (1685 B) and the smallest is the
+    0-byte 2026-09-09-notes-final-v2.md.
+  - Dates:
+    - Most files use Date: 2026-09-01.
+    - Two use YAML front matter with a lowercase date: key.
+    - Two use long forms such as 9 September 2026 and Monday, 14 September 2026.
+    - 2026-10-03-sales-pipeline.md says "sometime last week", and four files
+      have no date at all.
+    - Two meetings fall on Saturdays, which affects how "by Friday" resolves.
+  - Attendees: a comma list, or a bracketed list in front matter. They are
+    always full names, and the roster has 9 people.
+  - Checkboxes:
+    - Variants: - [ ], - [x], - [X], * and + bullets, and a nested indented
+      item.
+    - Tasks outside the ## Action items section: a table row, an ACTION: line,
+      and a task written as prose.
+    - Traps: a fenced-code template task and an HTML-commented-out task in
+      2026-10-09-security-review.md.
+  - Owners:
+    - Most are First to …, plus Priya N. / Priya S., @anita:, Anita & Rahul and
+      Lena (with Priya).
+    - Group or placeholder owners are Everyone, Team, Someone and TBD.
+  - Due dates:
+    - There are about 15 phrasings: ISO dates, weekdays, 10 Sep, Oct 3rd,
+      tomorrow, EOD, end of next week, mid-October and end of month.
+    - Some dates aren't deadlines, such as "freeze invoice edits from 9 Oct".
+    - 78 of the 119 lines mention a date.
+  - Malformed files:
+    - scratch.md is binary with junk bytes.
+    - 2026-09-09-notes-final-v2.md is empty.
+    - untitled.md has valid tasks but no header, date or attendees.
+    - 2026-09-19-offsite-draft.txt says it is not a meeting note.
+    - 2026-10-02-finance-sync.md has CRLF line endings and an em dash.
+  - Repeated tasks: about 15 recur across meetings, often reworded, for example
+    Priya N. versus Priya for the revised quote.
+  - Same first name: Priya Nair / Priya Shah and Rahul Mehta / Rahul Verma. In
+    several meetings both people with the same first name attend and a bare
+    Priya or Rahul is used. q4-offsite:15 says outright that it's unclear which
+    Rahul meant.
+
+  I added these beyond your list because they will affect decisions:
+  - The same task can appear as both a prose line and a checkbox in one file
+    (finance-sync:6 and :10).
+  - Some due dates drift between repeats, such as the welcome-email copy and the
+    customer quotes.
+  - "Anita" can mean the owner or just a mention, as in "review Anita's PR".
+
+  The ambiguity list, proposed decisions and up to 5 questions you asked for
+  earlier are still to come. Do you want me to do that now?
+
+> Based on specs/findings.md, list the ambiguities you see. Then propose a
+  decision for each, using these defaults unless the notes contradict them:
+  - Overdue = status open AND due_date < today (computed, not stored)
+  - "by Friday" = first Friday after the meeting date; tomorrow / next week /
+    end of month / EOW resolve relative to the meeting date
+  - No owner -> "Unassigned"; no date -> NULL, keep the raw text in due_raw
+  - Duplicates: normalized owner + normalized task, plus difflib ratio >= 0.85;
+    keep the earliest, record every sighting, a later [x] marks it done
+  - Same first name: resolve via the attendee list to a full name; otherwise
+    "Priya (ambiguous)" flagged; --owner accepts a full name or errors with
+  candidates
+  - Malformed note: skip, report file and reason, exit 0
+  - Ingest is idempotent
+  - "Today" is injectable via env ACTIONTRACK_TODAY
+    Ask me at most 5 questions about anything you can't decide. Don't write
+  files yet.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I read this from specs/findings.md, and no files were written. I also ran a
+  throwaway check of the 0.85 dedup threshold on real task pairs from the notes.
+
+  Ambiguities and proposed decisions
+
+  Dates
+  1. Weekday deadlines. "By Friday" on a Friday meeting resolves to the next
+     Friday (+7 days). The same rule covers Mon/Wed/Thu. "Next Tuesday"
+     (2026-10-05:9, a Monday) is the first Tuesday after the meeting, not
+     Tuesday of the following week.
+  2. Relative phrases, resolved against the meeting date.
+     - Tomorrow is +1 day, EOD is the meeting date, and EOD tomorrow is +1 day.
+     - EOW is that week's Friday. A weekend meeting gives the next Friday.
+     - "End of next week" is the Friday of next week, and end of month is the
+       last day of the meeting's month.
+     - "Mid-October" is the 15th.
+  3. Year-less and weekday-prefixed dates. 10 Sep, Oct 3rd and 15 October take
+     the meeting's year. If that lands before the meeting date, roll forward a
+     year. For Wed 16 Sep, the explicit date wins. If the weekday doesn't match,
+     log a warning.
+  4. Dates that aren't deadlines.
+     - Only by | due | before | until | on <date> counts as a due date, so on
+       2026-10-14 (2026-10-06:10) counts.
+     - from 9 Oct, for Saturday 10 Oct and for November give due NULL with the
+       raw text kept in due_raw.
+  5. Meeting date source. Order is header, then front matter, then filename. If
+     the header and filename disagree, the header wins and a warning is logged.
+     An unparseable header such as "sometime last week" falls back to the
+     filename date and warns. This contradicts "malformed means skip", because
+     the date is recoverable.
+
+  Parsing
+  6. What counts as a task. Any -, * or + checkbox with x or X at any indent,
+  anywhere in the file, except inside code fences and HTML comments. That
+  excludes security-review:8-13. I'd also take the table row (q4-offsite:22) and
+  the ACTION: line (:24) as open items. Prose is ignored, so finance-sync:6
+  dedupes against its own checkbox anyway.
+  7. Nested items. The nested item at q4-offsite:10 is an independent task with
+  an optional parent reference.
+  8. Owner extraction. Only the leading name is the owner, so "Rahul to review
+  Anita's PR" belongs to Rahul. Priya N. and Priya S. map to Nair and Shah, and
+  @anita maps to Anita.
+  9. Multiple owners. For Anita & Rahul and Lena (with Priya), the first name is
+  the primary owner and the rest are co-owners. --owner matches either, and
+  emails go to all of them.
+  10. Non-meeting files.
+      - Only *.md files are ingested.
+      - Skipped and reported:
+        - .txt files: "unsupported extension / not a meeting note".
+        - 2026-09-09-notes-final-v2.md: "empty".
+        - scratch.md: "binary / NUL bytes / invalid UTF-8".
+        - untitled.md: "no date or attendees".
+      - Files are read as UTF-8 with \r stripped, which handles the CRLF file
+  and the em dashes.
+
+  Dedup and status
+  11. Dedup normalization. Strip the due clause first, then lowercase, drop
+  articles and punctuation. Without that step the Priya revised-quote task only
+  matches by luck. In my check, the real repeats (revised quote, SSO work,
+  welcome email, pagination bug, schema mapping) all scored 1.0 once normalised.
+      - Near misses at 0.85. "Share first/updated wireframes" scored 0.78 and
+  would not merge. That is a real repeat (kickoff:11, 09-15:10, 09-22:9), so you
+  may want a lower threshold.
+      - Correct non-merges. The procurement contact vs form (0.62) and SSO
+  estimate vs SSO spike (0.62) correctly stay separate.
+  12. Sightings and done. Every sighting is recorded as (file, line, status, raw
+  due). Done is sticky, and the done date is the meeting date of the [x]
+  sighting. A later [ ] after [x] doesn't happen in these notes, so it just
+  stays done.
+  13. Overdue. Strictly due_date < today, so a task due today is not overdue.
+  Done tasks and tasks with a NULL due date are never overdue.
+  14. Idempotency. The sighting key is (file, normalized owner, normalized
+  task), not the line number, so edits that shift lines don't create duplicates.
+  Re-ingesting a file replaces that file's sightings.
+
+  Owners
+  15. Same first name. Resolve against that meeting's attendees. If the attendee
+  list is missing or has no match, fall back to the global roster only when the
+  first name is unique. Otherwise the owner is Priya (ambiguous), flagged.
+      - This affects 09-17:9, 10-08:9, q4-offsite:16, q4-offsite:17 and 10-07:9.
+      - --owner Priya errors with both candidates.
+  16. ACTIONTRACK_TODAY. It must be YYYY-MM-DD, and a bad value is an error. If
+  it's unset, use the system date.
+
+  Questions
+
+  1. Due date when a repeated task is re-planned. Anita's welcome-email copy
+     goes Wed 16 Sep, then Friday, then done. Lena's quotes go end of month,
+     then 2 Oct. "Keep the earliest" would show the stale first deadline.
+     - Option A: keep first-seen for first_seen only, and make due_date the
+       latest non-null sighting. This is my recommendation. It also keeps
+       Rahul's schema-mapping due Monday when the repeat has no date.
+     - Option B: keep the earliest sighting's due date as your default says.
+  2. "Everyone", "Team", "Someone" and "TBD". Your default says these become
+     Unassigned.
+     - "Everyone" and "Team" do have an owner (the attendees).
+     - Do you want them kept as a separate owner, shown in each attendee's list
+       and emailed to all attendees, or collapsed to Unassigned? My lean is
+       Unassigned for Someone/TBD, and "Everyone"/"Team" as a group owner
+       expanded to the meeting's attendees.
+  3. Ambiguous Priya and Rahul in queries and emails. Should --owner "Priya
+     Nair" also list Priya (ambiguous) items, marked as possibly hers? Or should
+     they appear only in an --ambiguous view and stay out of email drafts until
+     someone resolves them?
+  4. Email recipients and output. The notes only have names, with no addresses.
+     - Where should addresses come from: a contacts.csv/config file, or --to
+       flags? Should I stub first.last@…?
+     - Should the draft be one per owner across all open items, or one per owner
+       per meeting?
+     - Should this be draft-only via the Gmail create-draft tool and never send?
+       Gmail isn't authorised in this session, so I'd build and test against a
+       dry-run .eml/text output first.
+  5. Date-less meeting recovery. For 2026-10-03-sales-pipeline.md ("sometime
+     last week"), do you accept the filename-date fallback with a warning, or do
+     you want it skipped as malformed? untitled.md has no date anywhere, so
+     it's skipped either way. Related: Date: of "sometime last week" implies the
+     note is about last week, but I'd still use 10-03.

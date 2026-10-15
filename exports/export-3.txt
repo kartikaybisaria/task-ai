@@ -1,0 +1,510 @@
+
+> <ide_opened_file>The user opened the file
+  c:\Users\kartikay.bisaria_cod\Downloads\task@ai\01-discovery.md-setup2.txt in
+  the IDE. This may or may not be related to the current
+  task.</ide_opened_file>
+
+> Phase 2: CLAUDE.md, specs, skills (Plan mode, then edit)
+
+  Prompt 2.1: CLAUDE.md
+
+  Read specs/findings.md. Create CLAUDE.md for this project containing:
+  - One-paragraph purpose
+  - Spec-driven workflow rules: read the relevant spec before any code; never
+    change behavior without updating the spec first; write tests from the
+  spec's
+    acceptance criteria BEFORE implementation; commit after each spec is done
+  - Hard rules: NEVER send email, only create Gmail drafts; malformed notes are
+    skipped and reported, never crash; dates stored as ISO YYYY-MM-DD;
+    ACTIONTRACK_TODAY injectable
+  - Stack: Python 3.11+, argparse, sqlite3, pytest, no heavy dependencies
+  - Commands: test = pytest -q, run = python -m actiontrack <cmd>
+  - Pointers to .claude/skills/meeting-note-parsing and
+  .claude/skills/followup-email
+    Keep it under 60 lines.
+
+  Searched for 2 patterns, read 1 file, ran 2 shell commands (ctrl+o to expand)
+
+● Write(CLAUDE.md)
+  ⎿  Wrote 47 lines to CLAUDE.md
+       1 # actiontrack
+       3 actiontrack is a small Python CLI that reads meeting notes from
+         `notes/`, extracts
+         a local SQLite
+         It can also draft
+       6 follow-up emails as Gmail drafts. The notes are messy on purpose
+       7 formats, checkbox styles, owner phrasings and a few broken files
+         . See
+         ndle.
+      10 ## Spec-driven workflow
+     … +62 lines (ctrl+o to expand)
+
+● I created CLAUDE.md (actiontrack/CLAUDE.md) in the actiontrack project folder.
+  It's about 50 lines, under your 60-line limit, and I haven't run or tested
+  anything. I skipped Plan mode and wrote the file directly, since the prompt
+  specified the content exactly.
+
+  It covers everything on your list: the purpose paragraph, the spec-driven
+  workflow rules, the hard rules, the stack, the two commands and the pointers
+  to the two skills.
+
+  I added a few things beyond your list, taken from specs/findings.md
+  (actiontrack/specs/findings.md):
+  - Dates that can't be parsed are stored as NULL rather than guessed.
+  - Fenced code blocks and HTML comments are never counted as action items.
+  - Owners are resolved through the attendee list, because there are two Priyas
+    and two Rahuls.
+  - Notes are read as bytes and decoded defensively, because one file is binary
+    and one uses CRLF line endings.
+  - notes/ is read-only.
+  - A short layout section at the end.
+
+  The skills folder .claude/skills/ exists but is empty, so meeting-note-parsing
+  and followup-email still need to be created. The Layout section also assumes
+  the package is actiontrack/ and the tests are in tests/. Neither exists yet,
+  so adjust it if your structure differs.
+
+> Write these spec files in specs/. Each must have: Purpose, Behavior,
+  Edge cases, and numbered Acceptance Criteria (AC-1, AC-2...) that are
+  directly testable. Use real examples from the notes.
+
+  - 00-overview.md: purpose, the 4 commands, data model
+    (items, sightings), glossary, all the decisions we agreed on
+  - 01-parsing.md: date extraction, attendees, checkbox regex, owner
+    extraction, due-date resolution, code blocks ignored, CRLF, malformed
+  handling
+  - 02-dedup-owners-dates.md: fingerprinting, fuzzy matching, same-first-name
+    resolution, idempotent ingest, [x] propagation
+  - 03-cli.md: exact flags, output format, exit codes for ingest, list
+    (--owner, --status open|done|overdue, --due-before), done <id>
+  - 04-followup-gmail.md: followup <owner> [--dry-run]; one email per owner;
+    Overdue section first, then Open, then an Unassigned/needs-review note;
+    subject "Follow-up: your open action items (N)". IMPORTANT: explain that a
+    CLI cannot call an MCP connector itself, so the CLI renders the draft as
+    JSON (to, subject, body) via --dry-run and Claude Code, following the
+    followup-email skill, calls the Gmail MCP create-draft tool. Never send.
+    AC: "no code path calls a send tool".
+    Do not write any code.
+
+  Read 2 files, ran 2 shell commands (ctrl+o to expand)
+
+> Prompt 2.2: the specs (the SDD core)
+
+  Write these spec files in specs/. Each must have: Purpose, Behavior,
+  Edge cases, and numbered Acceptance Criteria (AC-1, AC-2...) that are
+  directly testable. Use real examples from the notes.
+
+  - 00-overview.md: purpose, the 4 commands, data model
+    (items, sightings), glossary, all the decisions we agreed on
+  - 01-parsing.md: date extraction, attendees, checkbox regex, owner
+    extraction, due-date resolution, code blocks ignored, CRLF, malformed
+  handling
+  - 02-dedup-owners-dates.md: fingerprinting, fuzzy matching, same-first-name
+    resolution, idempotent ingest, [x] propagation
+  - 03-cli.md: exact flags, output format, exit codes for ingest, list
+    (--owner, --status open|done|overdue, --due-before), done <id>
+  - 04-followup-gmail.md: followup <owner> [--dry-run]; one email per owner;
+    Overdue section first, then Open, then an Unassigned/needs-review note;
+    subject "Follow-up: your open action items (N)". IMPORTANT: explain that a
+    CLI cannot call an MCP connector itself, so the CLI renders the draft as
+    JSON (to, subject, body) via --dry-run and Claude Code, following the
+    followup-email skill, calls the Gmail MCP create-draft tool. Never send.
+    AC: "no code path calls a send tool".
+    Do not write any code.
+
+  Prompt 2.3: skills
+
+  Create two Claude Code skills:
+
+  .claude/skills/meeting-note-parsing/SKILL.md
+  - YAML frontmatter with name and a description saying when to use it
+  - Rules: date formats, attendee formats, checkbox regex, owner extraction,
+    due-date phrases, how to resolve them against the meeting date, ignore
+    code blocks, never crash (return (items, error)), edge cases to test
+
+  .claude/skills/followup-email/SKILL.md
+  - Steps: run python -m actiontrack followup "<owner>" --dry-run, read the
+    JSON, create a Gmail DRAFT using the create-draft MCP tool only, never any
+    send tool, show the draft to the user, stop
+  - Tone guidelines: short, polite, overdue first, each item with task, due
+    date and source meeting
+
+  Use the actual patterns from specs/findings.md, not generic ones.
+
+  Prompt 2.4: a slash command (a nice extra)
+
+  Create .claude/commands/followup.md, a custom slash command that takes
+  $ARGUMENTS as an owner name and tells Claude to follow the followup-email
+  skill for that owner. It must state: create a draft only, never send.
+
+  Prompt 2.5: safety guardrail
+
+  Create .claude/settings.json that denies any Gmail send tool. Use the exact
+  tool names from /mcp. Example pattern: "deny": ["mcp__gmail__send*"].
+  Also add a PreToolUse hook (a small script in .claude/hooks/) that blocks any
+  tool call whose name contains "send" and prints why. Explain what you did.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(specs\00-overview.md)
+  ⎿  Wrote 105 lines to specs\00-overview.md
+      1 # 00 Overview
+      2
+        d decisions.
+      4 Read `findings.md` for the raw facts about `notes/`. Specs 01 to
+        04 refine this one.
+      6 ## Purpose
+      7 actiontrack reads meeting notes (`notes/*.md`), extracts action i
+        tems, tracks them in a
+        ow-up emails as Gmail
+      9 **drafts** for a human to review. It never sends email.
+     … +175 lines (ctrl+o to expand)
+
+● Write(specs\01-parsing.md)
+  ⎿  Wrote 167 lines to specs\01-parsing.md
+      1 # 01 Parsing
+      2
+         a skip reason. Never raises
+      4 for bad input. Examples are real; paths are in `notes/`. Facts: `
+        findings.md`.
+      6 ## Purpose
+      7 Given the bytes of one file, produce the meeting date, the attend
+        ees and a list of raw
+        e, line), or a skip reason.
+      9 Matching, owner resolution and storage are in 02.
+     … +267 lines (ctrl+o to expand)
+
+● Status: I've written 00-overview.md and 01-parsing.md. Next are specs 02 to
+  04, then the two skills, the slash command, and the settings and hook. Fixing
+  one sloppy criterion in 01 first.
+
+● Update(specs\01-parsing.md)
+  ⎿  Added 1 line, removed 1 line
+      162  - AC-17: Due resolution matches every row of the worked-exampl
+           e table in section 6, including M on a weekend and `by Friday`
+            on a Friday giving M+7.
+      163  - AC-18: `Sam to cut cloud costs by 10% — proposal by 2026-10-
+           09` gives due 2026-10-09, `due_raw` `by 2026-10-09`, and `10%`
+            is never read as a day.
+      164  - AC-19: `Karan to freeze invoice edits from 9 Oct` gives due_
+           date NULL, due_raw `from 9 Oct`, and the task text still conta
+           ins `from 9 Oct`.
+      165 -- AC-20: `Lena to run the customer survey, results due 15 Octo
+          -ber` (M 2026-09-30) gives due 2026-10-15 and task `run the cus
+          -tomer survey, results`... with no trailing comma.             
+      165 +- AC-20: `Lena to run the customer survey, results due 15 Octo
+          +ber` (M 2026-09-30) gives due 2026-10-15, due_raw `due 15 Octo
+          +ber`, and task `run the customer survey, results` (no trailing
+          + space or dash).                                              
+      166  - AC-21: For M = 2026-12-20, `by 3 Jan` gives 2027-01-03; for 
+           M = 2026-09-01, `by 1 Sep` gives 2026-09-01.
+      167  - AC-22: Parsing every file in `notes/` raises no exception, a
+           nd the 36 files split into 32 parsed and 4 skipped.
+
+● Update(specs\00-overview.md)
+  ⎿  Added 1 line, removed 1 line
+      102  - AC-4: `ingest` of the shipped `notes/` directory scans 36 fi
+           les, ingests 32, skips 4 (`scratch.md`, `2026-09-09-notes-fina
+           l-v2.md`, `untitled.md`, `2026-09-19-offsite-draft.txt`), exit
+           s 0, and stores 117 sightings (115 checkbox lines, plus the ta
+           ble row and the `ACTION:` line), 13 of them checked.
+      103  - AC-5: With `ACTIONTRACK_TODAY=2026-10-15`, an open item due 
+           `2026-10-15` is not overdue and one due `2026-10-14` is.
+      104  - AC-6: With `ACTIONTRACK_TODAY=not-a-date`, every command exi
+           ts 2 and names the variable in its error.
+      105 -- AC-7: Each decision D1..D15 is covered by at least one AC in
+          - specs 01 to 04 (a checklist test maps D-number to AC-number i
+          -n a comment-free table in `tests/`).                          
+      105 +- AC-7: Every decision D1..D15 is covered by at least one AC i
+          +n specs 01 to 04; `specs/traceability.md` lists the mapping an
+          +d a test fails if a D-number has no AC.                       
+
+● Write(specs\02-dedup-owners-dates.md)
+  ⎿  Wrote 111 lines to specs\02-dedup-owners-dates.md
+       1 # 02 Dedup, owners, dates
+       3 How raw sightings from 01 become stable items: owner resolution,
+          fingerprinting, fuzzy matching,
+         findings.md` sections 8 and 11.
+       5 All "today" values below use `ACTIONTRACK_TODAY=2026-10-15`.
+       7 ## Purpose
+       8 The same task shows up in several meetings, often reworded (`Pri
+       9 Acme` vs `Priya to send the revised quote to Acme`). Keep one it
+         em per task, remember every
+          checks it off. Re-running
+     … +202 lines (ctrl+o to expand)
+
+● Update(specs\02-dedup-owners-dates.md)
+  ⎿  Added 1 line, removed 1 line
+      87  
+      88  ## Acceptance Criteria
+      89  - AC-1: The ten rows of the owner-resolution table in section 1
+           hold, using each note's real attendees (or none for 2026-09-23
+          ).
+      90 -- AC-2: `--` fixture note with attendees `Priya Nair, Priya Sha
+         -h` and `- [ ] Priya N. to x` / `- [ ] Priya S. to x` gives owne
+         -rs `Priya Nair` and `Priya Shah` and two separate items.       
+      90 +- AC-2: A fixture note with attendees `Priya Nair, Priya Shah` 
+         +and `- [ ] Priya N. to x` / `- [ ] Priya S. to x` gives owners 
+         +`Priya Nair` and `Priya Shah` and two separate items.          
+      91  - AC-3: After ingesting `notes/`, exactly 6 items have `review_
+          reason = ambiguous_owner`: 3 with `Priya (ambiguous)` (2026-09-
+          17 sign-off, 2026-10-08 go/no-go summary, 2026-09-30 hiring pla
+          n) and 3 with `Rahul (ambiguous)` (2026-09-23 rebase, 2026-10-0
+          7 review Anita's PR, 2026-09-30 architecture overview).
+      92  - AC-4: After ingesting `notes/`, exactly 5 items are `Unassign
+          ed` with `review_reason = unassigned`, `owner_raw` in {`Someone
+          `, `Everyone`, `Everyone`, `TBD`, `Team`}.
+      93  - AC-5: `normalize("Share first wireframes")` equals `normalize
+          ("share updated wireframes")`; `normalize("send the revised quo
+          te to Acme's team")` equals `send quote to acmes team`.
+
+● Update(specs\02-dedup-owners-dates.md)
+  ⎿  Added 1 line, removed 1 line
+      83  - Task text differs only in a date phrase that is part of the t
+          ask (`from 9 Oct` in both): equal keys, one item.
+      84  - Item with owner `Unassigned`: dedup works among Unassigned it
+          ems only.
+      85  - A checked sighting is the **first** one seen: item is done im
+          mediately, `done_date` = that meeting date.
+      86 -- Owner text is the same but the roster changes between ingests
+         -: owners are recomputed only for re-ingested files.            
+      86 +- The roster changes between ingests (a new person appears): ow
+         +ners are recomputed only for files that are re-ingested, so old
+         + items keep their resolved owner.                              
+      87  
+      88  ## Acceptance Criteria
+      89  - AC-1: The ten rows of the owner-resolution table in section 1
+           hold, using each note's real attendees (or none for 2026-09-23
+          ).
+
+● Write(specs\03-cli.md)
+  ⎿  Wrote 116 lines to specs\03-cli.md
+       1 # 03 CLI
+       3 Exact flags, output formats and exit codes for `ingest`, `list`,
+          `done`. (`followup` is in 04.)
+       4 Invoked as `python -m actiontrack [--db PATH] <command> ...`. St
+       5
+       6 ## Purpose
+         es, stable exit codes, so tests
+       8 and Claude Code can rely on them. Data and rules come from 00 to
+          02.
+      10 ## Behavior
+     … +181 lines (ctrl+o to expand)
+
+● Update(specs\03-cli.md)
+  ⎿  Added 1 line, removed 1 line
+      104  - AC-9: `list --due-before 2026-10-01` includes only items wit
+           h `DUE` < 2026-10-01 and never a `-` row; `list --due-before 2
+           026-10-01x` exits 2.
+      105  - AC-10: `list --owner Priya` exits 2 and stderr contains `Pri
+           ya Nair` and `Priya Shah`. `list --owner Nobody` exits 3.
+      106  - AC-11: `list --owner "Priya Nair"` exits 0, omits every `Pri
+           ya (ambiguous)` item, and stderr contains `note: 3 item(s) own
+           ed by 'Priya (ambiguous)' not shown`.
+      107 -- AC-12: `list --owner "Lena Fischer"` includes the row `Colle
+          -ct user feedback on the prototype (with Priya Nair)`'s counter
+          -part for co-owner: `list --owner "Priya Nair"` also includes t
+          -hat same item id.                                             
+      107 +- AC-12: `list --owner "Lena Fischer"` and `list --owner "Priy
+          +a Nair"` both include the same item id for `Collect user feedb
+          +ack on the prototype`; its OWNER column is `Lena Fischer` and 
+          +its TASK ends with ` (with Priya Nair)`.                      
+      108  - AC-13: `list --owner Unassigned` returns exactly 5 rows.
+      109  - AC-14: `list --status bogus` exits 2 (argparse). `list --sta
+           tus overdue` with no overdue items prints the header only and 
+           exits 0.
+      110  - AC-15: Rows are ordered by DUE ascending with `-` last, ties
+            by ID ascending.
+
+● Update(specs\03-cli.md)
+  ⎿  Added 1 line, removed 1 line
+      100  - AC-5: Running `ingest` twice: the second summary has `new_it
+           ems=0 new_sightings=0`, and both runs exit 0.
+      101  - AC-6: `list` prints the header `ID    STATUS  OWNER   DUE   
+             TASK` first and every row has exactly 5 tab-separated fields
+           .
+      102  - AC-7: With `ACTIONTRACK_TODAY=2026-10-15`, `list --owner "Ka
+           ran Joshi" --status overdue` prints 6 rows; `--status open` pr
+           ints 10 rows (6 overdue + 4 not overdue); `--status done` prin
+           ts 3 rows.
+      103 -- AC-8: Same date, `list --owner "Karan Joshi" --status open`:
+          - the row for `reconcile September ledger` (due 2026-10-15) has
+          - STATUS `open`, and the row `Send Acme the revised pricing she
+          -et` (due 2026-10-01) has STATUS `overdue`.                    
+      103 +- AC-8: Same date, `list --owner "Karan Joshi" --status open`:
+          + the row `Reconcile September ledger` (due 2026-10-15) has STA
+          +TUS `open`, and the row `Send Acme the revised pricing sheet` 
+          +(due 2026-10-01) has STATUS `overdue`.                        
+      104  - AC-9: `list --due-before 2026-10-01` includes only items wit
+           h `DUE` < 2026-10-01 and never a `-` row; `list --due-before 2
+           026-10-01x` exits 2.
+      105  - AC-10: `list --owner Priya` exits 2 and stderr contains `Pri
+           ya Nair` and `Priya Shah`. `list --owner Nobody` exits 3.
+      106  - AC-11: `list --owner "Priya Nair"` exits 0, omits every `Pri
+           ya (ambiguous)` item, and stderr contains `note: 3 item(s) own
+           ed by 'Priya (ambiguous)' not shown`.
+
+● Write(specs\04-followup-gmail.md)
+  ⎿  Wrote 144 lines to specs\04-followup-gmail.md
+       1 # 04 Follow-up emails (Gmail drafts)
+       2
+         PATH]`. Facts: `findings.md`;
+       4 data model and owner resolution: 00 and 02; exit codes: 03.
+       5
+       7 Prepare one polite follow-up email per person listing their over
+         due and open action items, as a
+       8 Gmail **draft** a human reviews and sends. actiontrack and Claud
+       9
+      10 ## Why the CLI does not talk to Gmail
+     … +249 lines (ctrl+o to expand)
+
+● Status: all five specs are written. Now the two skills, the slash command, the
+  settings file and the hook script.
+
+● Write(.claude\skills\meeting-note-parsing\SKILL.md)
+  ⎿  Wrote 70 lines to .claude\skills\meeting-note-parsing\SKILL.md
+       1 ---
+       3 description: Use when writing, changing, testing or debugging th
+         es/ and extracts the meeting date, attendees, owners, action-ite
+         m checkboxes or due dates. Also use when deciding how a messy no
+       4 ---
+       6 # Meeting-note parsing rules (actiontrack)
+       8 Authoritative spec: `specs/01-parsing.md` (owner matching: `spec
+         s/02-dedup-owners-dates.md`).
+         isagree, the spec wins; fix this skill.
+         hen code.
+     … +105 lines (ctrl+o to expand)
+
+● Write(.claude\skills\followup-email\SKILL.md)
+  ⎿  Wrote 43 lines to .claude\skills\followup-email\SKILL.md
+      1 ---
+      2 name: followup-email
+        on's open or overdue action items from the meeting notes. Creates
+         a Gmail DRAFT from the actiontrack CLI's JSON output. Never send
+        s email.
+      5
+      6 # Follow-up email as a Gmail draft
+      7
+        nnector, so this skill is the bridge:
+      9 the CLI renders the draft, Claude Code (you) creates it in Gmail.
+     … +57 lines (ctrl+o to expand)
+● Write(.claude\commands\followup.md)
+  ⎿  Wrote 11 lines to .claude\commands\followup.md
+       1 ---
+          items (draft only, never send)
+       3 argument-hint: <owner name>
+       4 ---
+       6 Follow the `followup-email` skill (`.claude/skills/followup-emai
+         l/SKILL.md`) for this owner: $ARGUMENTS
+       8 Rules for this command:
+       9 - Create a Gmail **draft only**. **Never send** the email, and n
+         ever call any tool whose name contains `send`.
+          (for example `Priya`), ask which person; do not guess.
+     … +7 lines (ctrl+o to expand)
+
+● Write(.claude\hooks\block_send.py)
+  ⎿  Wrote 34 lines to .claude\hooks\block_send.py
+      1 """PreToolUse hook: block any tool call whose name contains "send
+        ".
+      3 Claude Code passes the hook input as JSON on stdin. Exit code 2 b
+        locks the tool call and
+      4 shows stderr to Claude; exit code 0 lets it through. This project
+      5 drafts, never send email (see CLAUDE.md and specs/04-followup-gma
+        il.md).
+      6 """
+      8 import sys
+      9
+     … +30 lines (ctrl+o to expand)
+
+● Write(.claude\settings.json)
+  ⎿  Wrote 21 lines to .claude\settings.json
+       1 {
+       2   "permissions": {
+       3     "deny": [
+       4       "mcp__claude_ai_Gmail__send*",
+       5       "mcp__gmail__send*"
+       6     ]
+       7   },
+       8   "hooks": {
+       9     "PreToolUse": [
+      10       {
+     … +12 lines (ctrl+o to expand)
+
+● Testing the hook and validating the JSON.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The specs, the two skills, the slash command, the settings file and the
+  send-blocking hook are all written. I haven't run the specs against any code,
+  since none exists yet.
+
+  What I wrote
+
+  Specs in actiontrack/specs/, each with Purpose, Behavior, Edge cases and
+  numbered ACs:
+  - 00-overview.md (actiontrack/specs/00-overview.md) covers the four commands,
+    the data model (items, sightings), the glossary and decisions D1–D15.
+  - 01-parsing.md (actiontrack/specs/01-parsing.md) has 22 ACs.
+  - 02-dedup-owners-dates.md (actiontrack/specs/02-dedup-owners-dates.md) has 23
+    ACs.
+  - 03-cli.md (actiontrack/specs/03-cli.md) fixes the flags, the tab-separated
+    list output and the exit codes 0/1/2/3. It has 21 ACs.
+  - 04-followup-gmail.md (actiontrack/specs/04-followup-gmail.md) explains why a
+    CLI can't call an MCP connector, and defines the --dry-run JSON and the
+    email layout. It has 18 ACs, including "no code path calls a send tool".
+
+  Skills, command and guardrail in actiontrack/.claude/:
+  - skills/meeting-note-parsing/SKILL.md
+    (actiontrack/.claude/skills/meeting-note-parsing/SKILL.md)
+  - skills/followup-email/SKILL.md
+    (actiontrack/.claude/skills/followup-email/SKILL.md)
+  - commands/followup.md (actiontrack/.claude/commands/followup.md) says "create
+    a draft only, never send".
+  - settings.json (actiontrack/.claude/settings.json) denies Gmail send tools
+    and registers the hook.
+  - hooks/block_send.py (actiontrack/.claude/hooks/block_send.py) exits 2 for
+    any tool name containing "send" and prints why.
+
+  Real figures in the ACs
+
+  I counted these from notes/:
+  - Files: 36 scanned, 32 ingested and 4 skipped.
+  - Sightings: 117, of which 13 are checked.
+  - Owner flags: 6 ambiguous-owner items and 5 Unassigned items.
+  - Karan Joshi's email, as of 2026-10-15: 6 overdue, 4 open, subject "(10)".
+
+  I tested the hook with sample tool names: send tools exit 2, and create_draft
+  and Bash exit 0. It also exits 2 if its input isn't valid JSON. settings.json
+  parses.
+
+  Things to check
+
+  - Gmail tool names are not "exact". Gmail isn't authorized in this session, so
+    I couldn't run /mcp. The deny rules are guesses
+    (mcp__claude_ai_Gmail__send*, mcp__gmail__send*), and the hook is the real
+    safeguard. After you connect Gmail, run /mcp and replace them with the real
+    names.
+  - The hook also blocks SendMessage and any Slack send tool in this project.
+    That follows your "contains send" rule, so I left it.
+  - The hook command assumes python is on PATH. Mine is, but a Windows setup
+    without it would make the hook error out and fail open, so check that on
+    your machine.
+  - I answered your five session-2 questions myself. I found no answers in the
+    record, so section "Decisions I made on the open questions" in 00-overview
+    lists my picks for you to confirm or overrule:
+    - A re-planned task keeps the latest due date.
+    - Everyone, Team, Someone and TBD all become Unassigned.
+    - Ambiguous-owner items are hidden from --owner "Priya Nair" and appear in
+      the email's needs-review note.
+    - Email addresses come from contacts.csv and are never invented.
+    - The note dated "sometime last week" uses its filename date.
+  - Two additions you didn't ask for:
+    - The matcher ignores the words a, an, the, first, updated and revised.
+      Without that, the repeated "share first/updated wireframes" task scores
+      0.78 and wouldn't merge at 0.85.
+    - Checkboxes inside > blockquotes are ignored, because the customer's wish
+      in 2026-09-21-incident-review.md:9 is not an agreed action.
+  - Without --dry-run, followup prints a human-readable preview and still sends
+    or drafts nothing. Say if you'd rather it do something else.
+  - AC-7 in 00-overview refers to a specs/traceability.md file that doesn't
+    exist yet.

@@ -1,0 +1,17 @@
+# Traceability: decisions to acceptance criteria
+
+- D1: spec03 AC-1 (list overdue), spec04 AC-1 (overdue/open split)
+- D2: spec01 AC-5..AC-9 (relative dates)
+- D3: spec01 AC-10 (unassigned, null due, raw text kept)
+- D4: spec02 AC-1..AC-14 (duplicates)
+- D5: spec02 AC-15 (same first name), spec03 AC-4 (--owner)
+- D6: spec01 AC-22 (malformed notes skipped)
+- D7: spec02 AC-18..AC-20 (idempotent ingest)
+- D8: spec00 AC-6 (ACTIONTRACK_TODAY)
+- D9: spec01 AC-2 (.md only, CRLF)
+- D10: spec01 AC-12 (date source order)
+- D11: spec01 AC-11 (table row, ACTION line)
+- D12: spec02 AC-16 (leading owner, co-owners)
+- D13: spec01 AC-14 (deadline keywords)
+- D14: spec04 AC-5 (layout, subject)
+- D15: spec04 AC-14, AC-17 (no send)

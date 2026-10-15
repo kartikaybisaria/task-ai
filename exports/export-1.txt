@@ -1,0 +1,68 @@
+
+> Step-by-step playbook for Claude Code (local)
+
+  The approach: one phase = one fresh session. Each phase starts clean, reads
+  only what it needs from files (CLAUDE.md, specs), ends with an /export, and
+  gets committed. That way you never hit context or usage limits, and your git
+  history and exports show the full SDD flow.
+
+  Rules to avoid session limits
+  Run /clear between phases, but run /export first (saves the conversation to a
+  file).
+  Check /context and /cost now and then. If a phase passes about 60% context,
+  run /compact with a focus instruction.
+  Use Plan mode (Shift+Tab twice) for spec and design phases. It reads and
+  thinks without editing.
+  Use /model to pick a stronger model for specs and design, and a faster one
+  for implementation.
+  Never paste the notes into chat. Tell Claude to read files itself. Long messy
+  notes eat context fast.
+  Put anything that must survive /clear in CLAUDE.md or specs/. Files are your
+  memory, not the chat.
+  Step 0: Setup (terminal, about 3 min)
+  bash
+  mkdir actiontrack && cd actiontrack
+  git init
+  unzip ~/Downloads/notes.zip -d notes   # adjust path
+  mkdir -p specs conversations .claude/skills .claude/commands
+  python3 -m venv .venv && source .venv/bin/activate
+  claude
+
+  Connect Gmail inside Claude Code:
+
+  /mcp
+
+  If Gmail isn’t listed, add it with claude mcp add (see the current Claude
+  Code MCP docs for the Gmail server URL), authenticate, then run /mcp again
+  and write down the exact tool names, especially the create-draft and any send
+  tool.
+  do this
+
+● I'll start by locating notes.zip.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Zip extracted into a nested notes\notes. I'll flatten that and create the
+  venv.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Step 0 is done, apart from connecting Gmail, which needs you.
+
+  Everything is in C:\Users\kartikay.bisaria_cod\Downloads\task@ai\actiontrack:
+  - Git: an empty repo, initialized with git init. There are no commits yet.
+  - Folders: specs/, conversations/, .claude/skills/ and .claude/commands/
+    exist, and all are empty.
+  - Notes: 36 files from notes.zip are in notes/. The zip had its own nested
+    notes folder, so I flattened it.
+  - Python venv: created at .venv. On Windows you activate it with
+    .venv\Scripts\Activate.ps1, not source .venv/bin/activate.
+
+  Gmail: the claude.ai Gmail connector needs authorization, and I can't run the
+  OAuth flow in this non-interactive session. Authorize it in your claude.ai
+  connector settings, or run /mcp in an interactive claude session inside
+  actiontrack. After that, note the exact tool names, especially create-draft
+  and any send tool.
+
+  I didn't run claude itself, because you're already in a Claude Code session.
+  To begin Phase 1, open a fresh session in the actiontrack folder.

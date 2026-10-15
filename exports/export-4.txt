@@ -1,0 +1,204 @@
+
+> <ide_opened_file>The user opened the file c:\Users\kartikay.bisaria_cod\Downl
+  oads\task@ai\02.ocs-CLAUDEmd,,SDD-specs3.txt in the IDE. This may or may not
+  be related to the current task.</ide_opened_file>
+
+> Phase 3: Tests first (fresh session)
+
+  Prompt 3.1
+
+  Read CLAUDE.md and all files in specs/. Do not write implementation code.
+  Create the pytest test suite in tests/, derived from the acceptance criteria.
+  Name tests like test_AC_<spec>_<n>_<description> so each maps to a spec line.
+  Create small fixture notes in tests/fixtures/ for:
+  - duplicates across meetings (+ one later marked [x])
+  - item with no owner
+  - item with no due date
+  - two attendees named Priya (full names differ), one unambiguous and one
+  ambiguous item
+  - relative dates: Friday, tomorrow, next week, end of month, EOW
+  - malformed: missing date, no attendees, empty file, binary/invalid UTF-8
+  - CRLF file, checkbox inside a code block, nested checkbox
+  - re-running ingest twice (idempotent)
+    Use ACTIONTRACK_TODAY for overdue tests. Also add a test asserting that no
+    source file in src/ references a send function or tool.
+    Run pytest and confirm the tests FAIL because nothing is implemented.
+
+● I'll start by locating CLAUDE.md and the specs.
+
+  Searched for 1 pattern, read 7 files, ran 4 shell commands (ctrl+o to expand)
+
+● Spec counts check out against the notes (32 files, 115 checkboxes, 13
+  checked). pytest is installed in the venv now; next I'll build the fixtures.
+
+  Made 1 scratchpad edit +184, ran 4 shell commands (ctrl+o to expand)
+
+> once the above is done /export  conversations/03-tests.md
+  git add -A && git commit -m "test: spec-derived failing test suite"
+  /clear
+
+● Writing the test infrastructure first (config, conftest, helpers), then the
+  five spec test files.
+
+● Write(pytest.ini)
+  ⎿  User rejected write to pytest.ini
+      1 [pytest]
+      2 testpaths = tests
+      3 pythonpath = . src
+      4 addopts = -q
+  ⎿  Interrupted · What should Claude do instead?
+
+> once the above is done /export  conversations/03-tests.md
+  git add -A && git commit -m "test: spec-derived failing test suite"
+  /clear
+  faster
+
+● Skipping pytest.ini; the path setup goes in conftest instead. Writing the
+  helpers and suites now.
+
+● Write(tests\helpers.py)
+  ⎿  Wrote 142 lines to tests\helpers.py
+       1 """Shared test helpers. Interface ASSUMPTIONS (not named in the
+       2   actiontrack.parser.parse_note(path) -> (note | None, error | N
+         one)
+         , sightings
+       4       sighting: owner_raw, owner_names, task_text, checked, due_
+       5   actiontrack.matching.normalize(text) -> task_key
+       6 Everything else goes through the CLI (`python -m actiontrack`) a
+       7 """
+       8 import json
+      10 import sqlite3
+     … +147 lines (ctrl+o to expand)
+
+● Write(tests\conftest.py)
+  ⎿  Wrote 48 lines to tests\conftest.py
+      1 import shutil
+      2 import sys
+      3 from pathlib import Path
+      4
+      5 import pytest
+      6
+      7 ROOT = Path(__file__).resolve().parents[1]
+      8 for p in (ROOT, ROOT / "src"):
+      9     sys.path.insert(0, str(p))
+     … +42 lines (ctrl+o to expand)
+
+● Now spec 00 and spec 01 tests.
+
+● Write(tests\test_spec00_overview.py)
+  ⎿  Wrote 78 lines to tests\test_spec00_overview.py
+      1 """Acceptance criteria of specs/00-overview.md. Names: test_AC_00
+        _<n>_<description>."""
+      2 import re
+      3 from collections import Counter
+      4
+      6 from helpers import FIXTURES, ROOT, SHIPPED, TODAY, iso, parse_li
+        st, rows, run_cli, summary
+      7
+      8 ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+      9
+     … +97 lines (ctrl+o to expand)
+
+● Write(tests\test_spec01_parsing.py)
+  ⎿  Wrote 313 lines to tests\test_spec01_parsing.py
+       1 """Acceptance criteria and behaviours of specs/01-parsing.md.
+       2 AC tests: test_AC_01_<n>_...; behaviour/edge-case lines without
+         an AC: test_BEH_01_<section>_..."""
+       4 from helpers import FIXTURES, SHIPPED, iso, parse_lines, parse_n
+         ote, strings
+       5
+       6 N = SHIPPED
+       8
+       9 def _ok(path):
+      10     note, err = parse_note(path)
+     … +378 lines (ctrl+o to expand)
+
+● Write(tests\test_spec02_dedup.py)
+  ⎿  Wrote 291 lines to tests\test_spec02_dedup.py
+       1 """Acceptance criteria and behaviours of specs/02-dedup-owners-d
+         ates.md (today = 2026-10-15)."""
+       2 import difflib
+       4
+       5 import pytest
+       6 from helpers import (FIXTURES, SHIPPED, TODAY, find_item, ingest
+         , normalize, parse_list, rows,
+       8
+       9
+      10 def _owner_of(db, file, fragment):
+     … +360 lines (ctrl+o to expand)
+
+● Write(tests\test_spec03_cli.py)
+  ⎿  Wrote 237 lines to tests\test_spec03_cli.py
+       1 """Acceptance criteria and behaviours of specs/03-cli.md (today
+         = 2026-10-15 unless stated)."""
+       3 from helpers import FIXTURES, ROOT, SHIPPED, ingest, parse_list,
+          rows, run_cli, summary
+       4
+       6     "skipped: 2026-09-09-notes-final-v2.md: empty file",
+       7     "skipped: 2026-09-19-offsite-draft.txt: unsupported extensio
+         n (.txt)",
+       9     "skipped: untitled.md: no meeting date",
+      10 ]
+     … +287 lines (ctrl+o to expand)
+
+● Write(tests\test_spec04_followup.py)
+  ⎿  Wrote 271 lines to tests\test_spec04_followup.py
+       1 """Acceptance criteria and behaviours of specs/04-followup-gmail
+         .md (today = 2026-10-15 unless stated)."""
+       2 import ast
+       4 import json
+       5 import re
+       6 import subprocess
+       7 import sys
+       9 import pytest
+      10 from helpers import FIXTURES, ROOT, SHIPPED, TODAY, followup_jso
+         n, rows, run_cli, sections
+     … +351 lines (ctrl+o to expand)
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● The test suite is written and committed as 3f77749 ("test: spec-derived
+  failing test suite"). pytest -q gives 217 failed, 1 passed. They fail because
+  actiontrack/ has no package yet (No module named actiontrack).
+
+  The one pass is test_AC_04_17_send_is_denied_and_blocked. It checks the
+  existing .claude/settings.json, hook and skill, which are already in place, so
+  a pass is correct there.
+
+  Still to do on your side: I can't run /export conversations/03-tests.md or
+  /clear (they're built-in CLI commands), so please run them. The commit is
+  done, so do the export now; /clear can follow it.
+
+  What's in tests/:
+  - Test files: helpers.py, conftest.py, and one test file per spec (00–04).
+  - Naming: tests follow test_AC_<spec>_<n>_<desc>. Behaviours and edge cases
+    with no AC number are test_BEH_<spec>_<section>_….
+  - Fixtures: tests/fixtures/ has all the cases you listed, plus contacts CSVs
+    and fuzzy-match fixtures at exactly 0.85 and 0.84.
+  - Fixture files: they are byte-exact (CRLF, BOM, NUL, invalid UTF-8), so
+    tests/fixtures/.gitattributes stops git from changing them.
+  - Overdue tests: they set ACTIONTRACK_TODAY through the run_cli helper.
+  - Send check: AC-04-14 scans src/ and the actiontrack/ package for send
+    functions and network modules. It asserts that source files exist, so it
+    can't pass on an empty directory.
+
+  Things you should know:
+  - API names are my assumption. The specs don't name the parser functions, so
+    the tests assume actiontrack.parser.parse_note(path) -> (note, err) and
+    actiontrack.matching.normalize. The expected note and sighting attributes
+    are in the docstring of tests/helpers.py. Please add these names to spec 01
+    §7.
+  - specs/traceability.md is missing. Overview AC-7 requires it, so that test
+    fails until someone writes the file.
+  - @anita conflict. Spec 00 says owner_raw is @anita, while spec 01 says the
+    owner is anita. The tests only assert the owner name.
+  - "Next week" isn't defined. A bare "next week" isn't in the specs, so I
+    tested end of next week and next Tuesday.
+  - Extra files.
+    - .gitignore: I added it for .venv/, __pycache__/ and *.db, so git add -A
+      didn't commit the venv.
+    - pytest.ini: you declined it, so conftest.py sets the import path instead.
+    - pytest: I installed it in .venv.
+  - CRLF warnings. Git warned that LF will become CRLF in the working copies of
+    non-fixture files. It's harmless, but you may want a repo-wide
+    .gitattributes.
